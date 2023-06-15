@@ -250,35 +250,34 @@ class _Page1State extends State<Page1> {
             height64,
             Center(
                 child: CustomButton(
-                    onPressed: () async {
-                      // ---------- update password response ----------
-                      if (passwordController.text ==
-                          confirmPasswordController.text) {
-                        // response
-                        final response = await updatePassword(body: {
-                          "email": email,
-                          "code": pinCode,
-                          "password": passwordController.text
-                        });
-                        print(response.body);
+              text: "Reset Password",
+              onPressed: () async {
+                // ---------- update password response ----------
+                if (passwordController.text == confirmPasswordController.text) {
+                  // --- response
+                  final response = await updatePassword(body: {
+                    "email": email,
+                    "code": pinCode,
+                    "password": passwordController.text
+                  });
+                  print(response.body);
 
-                        // if response is success
-                        if (response.statusCode == 200) {
-                          snackBar("Your password is updated successfully");
-                          passwordController.clear();
-                          confirmPasswordController.clear();
+                  // --- if response is success
+                  if (response.statusCode == 200) {
+                    snackBar("Your password is updated successfully");
+                    passwordController.clear();
+                    confirmPasswordController.clear();
 
-                          currentview = 0;
-                          Navigator.pop(context);
-                        } else {
-                          snackBar(json.decode(response.body)["msg"]);
-                        }
-                      } else {
-                        snackBar(
-                            "The password and confirm password doesn't match");
-                      }
-                    },
-                    text: "Reset Password"))
+                    currentview = 0;
+                    Navigator.pop(context);
+                  } else {
+                    snackBar(json.decode(response.body)["msg"]);
+                  }
+                } else {
+                  snackBar("The password and confirm password doesn't match");
+                }
+              },
+            ))
           ],
         ),
       ),
