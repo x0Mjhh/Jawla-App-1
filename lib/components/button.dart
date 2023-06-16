@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
-import '../constants/constants.dart';
+import '../constants/app_styles.dart';
 
 class CustomButton extends StatelessWidget {
   const CustomButton({
     super.key,
-    required this.onPressed,
     required this.text,
+    required this.onPressed,
+    this.width,
+    this.height,
   });
-  final Function() onPressed;
+
   final String text;
+  final Function() onPressed;
+  final double? width;
+  final double? height;
+
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
@@ -17,9 +23,9 @@ class CustomButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
-          backgroundColor: myPrimaryColor,
+          backgroundColor: primaryColor,
           elevation: 0,
-          minimumSize: const Size(200, 45),
+          minimumSize: Size(width ?? 200, height ?? 45),
         ),
         onPressed: onPressed,
         child: Text(

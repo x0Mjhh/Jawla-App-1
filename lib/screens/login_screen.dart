@@ -1,23 +1,29 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jawla_app/components/button.dart';
 import 'package:jawla_app/components/text_field.dart';
 import 'package:jawla_app/constants/constants.dart';
 import 'package:flutter/services.dart';
-import 'package:jawla_app/extension/format.dart';
+import 'package:jawla_app/extensions/format.dart';
+import 'package:jawla_app/extensions/navigators.dart';
 import 'package:jawla_app/services/api/auth/forget_password.dart';
+import 'package:jawla_app/services/api/auth/login_response.dart';
 import 'package:jawla_app/services/api/auth/update_password.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
-class Page1 extends StatefulWidget {
-  const Page1({super.key});
+import '../constants/app_styles.dart';
+import 'my_navigation_bar.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  _Page1State createState() => _Page1State();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _Page1State extends State<Page1> {
+class LoginScreenState extends State<LoginScreen> {
   int currentview = 0;
   List<Widget> views = [];
   String email = "";
@@ -26,7 +32,9 @@ class _Page1State extends State<Page1> {
 
   TextEditingController emailController = TextEditingController(),
       passwordController = TextEditingController(),
-      confirmPasswordController = TextEditingController(),
+      emailResetPasswordController = TextEditingController(),
+      newPasswordController = TextEditingController(),
+      confirmNewPasswordController = TextEditingController(),
       pinCodeController = TextEditingController();
 
   @override
@@ -39,33 +47,136 @@ class _Page1State extends State<Page1> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    confirmPasswordController.dispose();
+    emailResetPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmNewPasswordController.dispose();
     // pinCodeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Image.asset("lib/assets/images/background.jpeg"),
-          Center(
-            child: InkWell(
-              onTap: () {
-                currentview = 0;
-                opensheet(context);
-              },
-              child: const Text("Forget Paswword"),
+    return Scaffold(body: loginScreen(context));
+  }
+
+// ------------------ *** Login Screen *** ------------------
+  Widget loginScreen(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/login-page-bg.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Image.asset("assets/images/logo.png"),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                    hint: "Email",
+                    iconName: Icons.email_outlined,
+                    controller: emailController,
+                  ),
+                  CustomTextField(
+                    hint: "Password",
+                    iconName: Icons.lock_outline_rounded,
+                    controller: passwordController,
+                    isPassword: true,
+                  ),
+                  const SizedBox(height: 10),
+                  InkWell(
+                    onTap: () {
+                      opensheet(context);
+                    },
+                    child: const Text(
+                      "Forgot your password?",
+                      style: forgetPasswordStyle,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  CustomButton(
+                    text: "Login",
+                    onPressed: () async {
+                      if (emailController.text.isNotEmpty &&
+                          passwordController.text.isNotEmpty) {
+                        if (emailController.text.isValidEmail) {
+                          // ---------- login response ----------
+                          final response = await loginResponse(body: {
+                            "email": emailController.text,
+                            "password": passwordController.text
+                          });
+                          print(response.body);
+
+                          try {
+                            if (response.statusCode == 200) {
+                              final box = GetStorage();
+                              box.write(
+                                  "token", json.decode(response.body)["Token"]);
+                              if (!mounted) return;
+                              context.pushAndRemoveUntil(
+                                  screen: const MyNavigationBar());
+                            } else {
+                              snackBar(json.decode(response.body)["msg"]);
+                            }
+                          } catch (error) {
+                            snackBar("No connection");
+                          }
+                        } else {
+                          snackBar("Enter valid email");
+                        }
+                      } else {
+                        snackBar("Enter your email and password");
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Divider(height: 40, thickness: 3, color: greyButtonColor),
+                      Text("Or", style: haveAccountStyle),
+                      Divider(height: 40, thickness: 3, color: greyButtonColor),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Don't have an account yet? ",
+                        style: haveAccountStyle,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          // context.push(screen: const SignUpScreen());
+                        },
+                        child: Text(
+                          "Sign up",
+                          style: haveAccountStyle.copyWith(color: primaryColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 140),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-// --------------- snack bar ---------------
-  void opensheet(BuildContext context) {
+// ------------------ *** Forget Password Modal Bottom Sheets *** ------------------
+  opensheet(BuildContext context) {
     showModalBottomSheet(
       context: (context),
       enableDrag: true,
@@ -93,7 +204,7 @@ class _Page1State extends State<Page1> {
         backgroundColor: myTertiaryColor,
         content: Text(
           message!,
-          style: const TextStyle(color: myPrimaryColor, fontSize: 14),
+          style: const TextStyle(color: primaryColor, fontSize: 14),
         ),
         duration: const Duration(seconds: 3),
       ),
@@ -127,27 +238,31 @@ class _Page1State extends State<Page1> {
             CustomTextField(
                 hint: "Email",
                 iconName: Icons.email_outlined,
-                controller: emailController),
+                controller: emailResetPasswordController),
             height96,
             Center(
               child: CustomButton(
                   onPressed: () async {
-                    if (emailController.text.isValidEmail) {
+                    if (emailResetPasswordController.text.isValidEmail) {
                       // ---------- forget password response ----------
                       final response = await forgetPassword(
-                          body: {"email": emailController.text});
+                          body: {"email": emailResetPasswordController.text});
                       print(response.body);
 
-                      if (response.statusCode == 200) {
-                        email = emailController.text;
-                        currentview = 1;
-                        emailController.clear();
+                      try {
+                        if (response.statusCode == 200) {
+                          email = emailResetPasswordController.text;
+                          currentview = 1;
+                          emailResetPasswordController.clear();
 
-                        if (!mounted) return;
-                        Navigator.pop(context);
-                        opensheet(context);
-                      } else {
-                        snackBar(json.decode(response.body)["msg"]);
+                          if (!mounted) return;
+                          Navigator.pop(context);
+                          opensheet(context);
+                        } else {
+                          snackBar(json.decode(response.body)["msg"]);
+                        }
+                      } catch (error) {
+                        snackBar("No connection");
                       }
                     } else {
                       snackBar("Enter valid email");
@@ -236,16 +351,16 @@ class _Page1State extends State<Page1> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
             CustomTextField(
                 hint: "Password",
-                iconName: Icons.password,
-                controller: passwordController,
+                iconName: Icons.lock_outline,
+                controller: newPasswordController,
                 isPassword: true),
             height16,
             const Text("Confirm Password",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
             CustomTextField(
                 hint: "Re-type password",
-                iconName: Icons.password,
-                controller: confirmPasswordController,
+                iconName: Icons.lock_outline,
+                controller: confirmNewPasswordController,
                 isPassword: true),
             height64,
             Center(
@@ -253,20 +368,21 @@ class _Page1State extends State<Page1> {
               text: "Reset Password",
               onPressed: () async {
                 // ---------- update password response ----------
-                if (passwordController.text == confirmPasswordController.text) {
+                if (newPasswordController.text ==
+                    confirmNewPasswordController.text) {
                   // --- response
                   final response = await updatePassword(body: {
                     "email": email,
                     "code": pinCode,
-                    "password": passwordController.text
+                    "password": newPasswordController.text
                   });
                   print(response.body);
 
                   // --- if response is success
                   if (response.statusCode == 200) {
                     snackBar("Your password is updated successfully");
-                    passwordController.clear();
-                    confirmPasswordController.clear();
+                    newPasswordController.clear();
+                    confirmNewPasswordController.clear();
 
                     currentview = 0;
                     Navigator.pop(context);
@@ -302,13 +418,13 @@ class _Page1State extends State<Page1> {
           fieldWidth: 40,
           activeColor: myTertiaryColor,
           inactiveColor: myTertiaryColor,
-          selectedColor: myPrimaryColor,
+          selectedColor: primaryColor,
           activeFillColor: Colors.white,
           inactiveFillColor: Colors.white,
           selectedFillColor: Colors.white,
         ),
 
-        cursorColor: myPrimaryColor,
+        cursorColor: primaryColor,
         animationDuration: const Duration(milliseconds: 300),
         enableActiveFill: true,
         controller: pinCodeController,

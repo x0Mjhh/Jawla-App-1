@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:jawla_app/screens/my_navigation_bar.dart';
 
-import 'screens/reset_password_screen.dart';
-
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init();
   runApp(const MainApp());
 }
 
@@ -14,7 +16,7 @@ class MainApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: Page1(),
+        body: MyNavigationBar(),
       ),
     );
   }

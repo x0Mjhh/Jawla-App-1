@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawla_app/constants/constants.dart';
+import '../constants/app_styles.dart';
 
-// ignore: must_be_immutable
 class CustomTextField extends StatefulWidget {
   const CustomTextField(
       {super.key,
@@ -20,10 +19,10 @@ class CustomTextField extends StatefulWidget {
   final int? maxLines;
 
   @override
-  State<CustomTextField> createState() => _CustomTextFieldState();
+  State<CustomTextField> createState() => CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends State<CustomTextField> {
+class CustomTextFieldState extends State<CustomTextField> {
   bool? isEncrypted;
 
   @override
@@ -51,7 +50,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           controller: widget.controller,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
-          cursorColor: myPrimaryColor,
+          cursorColor: primaryColor,
           decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
@@ -71,6 +70,37 @@ class _CustomTextFieldState extends State<CustomTextField> {
               prefixIcon: Icon(widget.iconName, color: myTertiaryColor),
               suffixIcon: widget.isPassword ?? false ? showHidePassword : null),
           obscureText: widget.isPassword ?? false ? isEncrypted! : false),
+    );
+  }
+
+  Widget searchTextFeild(BuildContext context, IconData prefixIcon,
+      IconData suffixIcon, String hint, TextEditingController controller) {
+    return TextField(
+      style: const TextStyle(color: Color.fromARGB(255, 50, 50, 50)),
+      controller: controller,
+      cursorColor: primaryColor,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color.fromARGB(255, 234, 234, 234),
+        enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.all(Radius.circular(20))),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.all(
+            Radius.circular(20),
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        hintText: hint,
+        hintStyle: const TextStyle(color: myTertiaryColor),
+        prefixIcon: Icon(prefixIcon, color: myTertiaryColor),
+        suffixIcon: Icon(
+          suffixIcon,
+          color: myTertiaryColor,
+          size: 22,
+        ),
+      ),
     );
   }
 }
